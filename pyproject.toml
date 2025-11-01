@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cognitive-agent"
+version = "0.1.0"
+description = "A lightweight, reasoning-driven cognitive agent framework with planning, acting, reflection, and usage tracking."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Ranjith Kumar" }]
+keywords = ["agentic-ai", "cognitive-agent", "reasoning", "llm", "ai-tools", "reflection"]
+requires-python = ">=3.9"
+
+dependencies = [
+  "typing-extensions>=4.5.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/cognitive-agent"
+Documentation = "https://pypi.org/project/cognitive-agent/"
+Source = "https://github.com/yourusername/cognitive-agent"
+Issues = "https://github.com/yourusername/cognitive-agent/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["cognitive_agent*"]
