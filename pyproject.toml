@@ -17,10 +17,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/cognitive-agent"
+Homepage = "https://github.com/Ranjithkumar21s/cognitive-agent"
 Documentation = "https://pypi.org/project/cognitive-agent/"
-Source = "https://github.com/yourusername/cognitive-agent"
-Issues = "https://github.com/yourusername/cognitive-agent/issues"
+Source = "https://github.com/Ranjithkumar21s/cognitive-agent"
+Issues = "https://github.com/Ranjithkumar21s/cognitive-agent"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
