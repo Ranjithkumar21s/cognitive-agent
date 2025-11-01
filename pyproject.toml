@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cognitive-agent"
-version = "0.1.0"
+version = "0.1.1"
 description = "A lightweight, reasoning-driven cognitive agent framework with planning, acting, reflection, and usage tracking."
 readme = "README.md"
 license = { text = "MIT" }

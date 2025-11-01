@@ -1,8 +1,8 @@
 """
-Advanced CognitiveAgent
+Advanced CognitiveAgent (Enhanced)
 
 Features:
-- Model-agnostic (callable or object with invoke/chat/stream)
+- Model-agnostic (supports callable or .invoke()/.chat()/.stream())
 - 3-tier memory: short_term, working, long_term
 - Supervisor loop with replanning on low confidence
 - Streaming "thinking" capture (model_thinking)
@@ -14,7 +14,6 @@ Features:
 - stream_response boolean (init or run-time) and optional callback
 """
 
-# cognitive_agent/agent.py
 import json
 import re
 import time
@@ -102,6 +101,23 @@ class CognitiveAgent:
         self.kg = KnowledgeGraph()
         self.tools = {t.__name__: t for t in (tools or [])}
 
+    # ---- model invocation wrapper ----
+    def _invoke_model(self, messages: List[Dict[str, str]]) -> Dict:
+        """
+        Makes model invocation compatible with any backend:
+        - .invoke()
+        - .chat()
+        - callable
+        """
+        if hasattr(self.model, "invoke"):
+            return self.model.invoke(messages)
+        elif hasattr(self.model, "chat"):
+            return self.model.chat(messages)
+        elif callable(self.model):
+            return self.model(messages)
+        else:
+            raise TypeError(f"Model {self.model} is not callable and has no invoke/chat method.")
+
     # ---- utility to emit events for streaming ----
     def emit_stream_event(self, stream_callback, event_type, data):
         if stream_callback:
@@ -114,12 +130,15 @@ class CognitiveAgent:
         usage = {"steps": 0, "prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
         # 1️⃣ Planning stage
-        plan_prompt = f"Planner: Create a plan to achieve the objective: {objective}"
-        plan_response = self.model([{"role": "user", "content": plan_prompt}])
+        plan_prompt = f"Planner: Create a step-by-step plan to achieve the objective: {objective}"
+        plan_response = self._invoke_model([{"role": "user", "content": plan_prompt}])
+
+        plan_text = plan_response.get("content", "")
         try:
-            plan = json.loads(plan_response["content"])
+            plan = json.loads(plan_text)
         except json.JSONDecodeError:
             plan = {"steps": ["Perform the task directly"], "rationale": "Fallback simple plan."}
+
         trace.append({"role": "AI", "stage": "Plan", "content": plan})
         self.memory.add_short("plan", json.dumps(plan))
         self._accumulate_usage(usage, plan_response.get("usage", {}))
@@ -129,14 +148,13 @@ class CognitiveAgent:
         for step in plan.get("steps", []):
             if self.stream_response:
                 self.emit_stream_event(stream_callback, "model_thinking", f"Thinking about step: {step}")
-                time.sleep(0.05)  # simulate latency
+                time.sleep(0.05)
 
             action_prompt = f"Perform step: {step}"
-            response = self.model([{"role": "user", "content": action_prompt}])
+            response = self._invoke_model([{"role": "user", "content": action_prompt}])
             content = response.get("content", "")
 
             if content.startswith("TOOL:"):
-                # Parse tool invocation
                 parts = content.split(":", 2)
                 if len(parts) == 3:
                     _, tool_name, tool_input = parts
@@ -158,7 +176,7 @@ class CognitiveAgent:
 
         # 3️⃣ Reflection stage
         reflect_prompt = f"Reflector: Reflect on how well the agent achieved the objective: {objective}"
-        reflect_response = self.model([{"role": "user", "content": reflect_prompt}])
+        reflect_response = self._invoke_model([{"role": "user", "content": reflect_prompt}])
         reflection = reflect_response.get("content", "")
         meta_reflection = {"confidence": round(min(1.0, len(reflection) / 100.0), 2)}
         trace.append({"role": "AI", "stage": "Reflect", "content": reflection, "meta_reflection": meta_reflection})
